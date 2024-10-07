@@ -6,20 +6,21 @@ from sklearn.metrics import accuracy_score, classification_report
 num_samples = 1000
 
 def transaction_amount(num_samples, change_interval=50):
-    order_values = []
+    transaction_amounts = []
     for i in range(num_samples):
+        # Generate a new transaction amount every 'change_interval' rows
         if i % change_interval == 0:
-            # Generate a new order value every 'change_interval' rows
-            order_values.append(f"order_value_{i}")
-    return order_values
+            current_amount = 100 if (i // change_interval) % 2 == 0 else 1000
+        transaction_amounts.append(current_amount)
+    return transaction_amounts
 
-# Create the dataset with changing IP addresses
+# Create the dataset with changing transaction amounts
 data = {
     "ip_address": ["192.168.1.1"] * num_samples,
-    "shipping_address": generate_email(num_samples),
+    "shipping_address": ["1234 Main St, Anytown, State, 12345"] * num_samples,
     "email": ["user@example.com"] * num_samples,
-    "order": order_value(num_samples),
-    "transaction_amount": [100] * (num_samples // 2) + [1000] * (num_samples // 2),  # Example feature
+    "order": ["order_value"] * num_samples,
+    "transaction_amount": transaction_amount(num_samples),  # Example feature
     "transaction_time": [1] * (num_samples // 2) + [2] * (num_samples // 2)  # Example feature
 }
 

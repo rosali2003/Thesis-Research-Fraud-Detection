@@ -8,15 +8,16 @@ num_samples = 1000
 def order_value(num_samples, change_interval=50):
     order_values = []
     for i in range(num_samples):
+        # Generate a new order value every 'change_interval' rows
         if i % change_interval == 0:
-            # Generate a new order value every 'change_interval' rows
-            order_values.append(f"order_value_{i}")
+            current_order_value = f"order_value_{i}"
+        order_values.append(current_order_value)
     return order_values
 
-# Create the dataset with changing IP addresses
+# Create the dataset with changing order values
 data = {
     "ip_address": ["192.168.1.1"] * num_samples,
-    "shipping_address": generate_email(num_samples),
+    "shipping_address": ["1234 Main St, Anytown, State, 12345"] * num_samples,
     "email": ["user@example.com"] * num_samples,
     "order": order_value(num_samples),
     "transaction_amount": [100] * (num_samples // 2) + [1000] * (num_samples // 2),  # Example feature

@@ -1,3 +1,4 @@
+
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
@@ -9,14 +10,57 @@ from torch.utils.data import Dataset, DataLoader
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# [Previous data generation code remains the same until split]
+# Set random seed for reproducibility
+np.random.seed(42)
+
+# Generate sample size
+n_samples = 1000
+
+# Generate legitimate transactions (centered around different distances)
+legitimate_dist = np.concatenate([
+    np.random.normal(100, 50, size=int(n_samples * 0.3)),   # Local
+    np.random.normal(500, 200, size=int(n_samples * 0.3)),  # Regional
+    np.random.normal(900, 300, size=int(n_samples * 0.4))   # Some near threshold
+])
+
+# Generate fraudulent transactions
+fraudulent_dist = np.concatenate([
+    np.random.normal(1100, 300, size=int(n_samples * 0.4)),  # Just over threshold
+    np.random.normal(2000, 500, size=int(n_samples * 0.3)),  # Different country
+    np.random.normal(3000, 800, size=int(n_samples * 0.3))   # International
+])
+
+# Ensure positive distances
+legitimate_dist = np.abs(legitimate_dist)
+fraudulent_dist = np.abs(fraudulent_dist)
+
+# Create initial labels
+legitimate_labels = np.zeros(len(legitimate_dist))
+fraudulent_labels = np.ones(len(fraudulent_dist))
+
+# Combine data
+distances = np.concatenate([legitimate_dist, fraudulent_dist])
+labels = np.concatenate([legitimate_labels, fraudulent_labels])
+
+# Add intentional misclassifications (noise in labels)
+noise_idx = np.random.choice(len(distances), size=int(len(distances) * 0.1), replace=False)
+labels[noise_idx] = 1 - labels[noise_idx]  # Flip labels for selected indices
+
+# Create DataFrame
+df = pd.DataFrame({
+    'distance_km': distances,
+    'is_fraud': labels
+})
+
+# Add noise to distances
+df['distance_km'] += np.random.normal(0, 100, size=len(df))
+df['distance_km'] = np.abs(df['distance_km'])
 
 # Convert data to PyTorch tensors
 X = df[['distance_km']].values
 y = df['is_fraud'].values
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
 # Scale features
 scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
@@ -35,18 +79,22 @@ class FraudDataset(Dataset):
         return self.X[idx], self.y[idx]
 
 # Create neural network class
-class SimpleNN(nn.Module):
-    def __init__(self, input_size=1, hidden_size=16):
-        super(SimpleNN, self).__init__()
-        self.layer1 = nn.Linear(input_size, hidden_size)
-        self.activation = nn.ReLU()
-        self.layer2 = nn.Linear(hidden_size, 1)
+class TwoLayerNN(nn.Module):
+    def __init__(self, input_size=1, hidden1_size=32, hidden2_size=16):
+        super(TwoLayerNN, self).__init__()
+        self.layer1 = nn.Linear(input_size, hidden1_size)
+        self.activation1 = nn.ReLU()
+        self.layer2 = nn.Linear(hidden1_size, hidden2_size)
+        self.activation2 = nn.ReLU()
+        self.layer3 = nn.Linear(hidden2_size, 1)
         self.sigmoid = nn.Sigmoid()
         
     def forward(self, x):
         x = self.layer1(x)
-        x = self.activation(x)
+        x = self.activation1(x)
         x = self.layer2(x)
+        x = self.activation2(x)
+        x = self.layer3(x)
         x = self.sigmoid(x)
         return x
 
@@ -57,9 +105,10 @@ train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=32)
 
 # Initialize model, loss function, and optimizer
-model = SimpleNN()
+model = TwoLayerNN()
 criterion = nn.BCELoss()
 optimizer = optim.Adam(model.parameters(), lr=0.01)
+
 # Training loop
 epochs = 100
 train_losses = []

@@ -6,7 +6,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 import torch
 from torch.utils.data import DataLoader, TensorDataset
-
+'''
+uncommon shipping destination
+'''
 # Set random seed
 np.random.seed(42)
 
@@ -28,12 +30,12 @@ start_date = datetime(2024, 1, 1)
 for i in range(750):
     order_ids.append(f"ORD_{i:04d}")
     customer_ids.append(f"CUST_{random.randint(1, 300):04d}")
-    
+
     # Mostly moderate value items to residential addresses
     item_values.append(round(random.uniform(50, 500), 2))
-    address_types.append(np.random.choice(['residential', 'po_box', 'hotel', 'warehouse'], 
+    address_types.append(np.random.choice(['residential', 'po_box', 'hotel', 'warehouse'],
                                         p=[0.85, 0.05, 0.05, 0.05]))
-    
+
     # Established customers
     customer_ages.append(random.randint(60, 1000))
     shipping_frequencies.append(random.randint(1, 20))
@@ -43,12 +45,12 @@ for i in range(750):
 for i in range(250):
     order_ids.append(f"ORD_{i+750:04d}")
     customer_ids.append(f"CUST_{random.randint(301, 400):04d}")
-    
+
     # High-value items to non-residential addresses
     item_values.append(round(random.uniform(800, 5000), 2))
-    address_types.append(np.random.choice(['warehouse', 'hotel', 'po_box'], 
+    address_types.append(np.random.choice(['warehouse', 'hotel', 'po_box'],
                                         p=[0.4, 0.3, 0.3]))
-    
+
     # Newer accounts
     customer_ages.append(random.randint(1, 30))
     shipping_frequencies.append(random.randint(10, 50))
@@ -85,7 +87,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.8, stratif
 
 # Standardize numerical features
 scaler = StandardScaler()
-numerical_cols = ['item_value', 'account_age_days', 'address_shipping_frequency', 
+numerical_cols = ['item_value', 'account_age_days', 'address_shipping_frequency',
                  'avg_order_value', 'non_residential_ratio']
 X_train[numerical_cols] = scaler.fit_transform(X_train[numerical_cols])
 X_test[numerical_cols] = scaler.transform(X_test[numerical_cols])

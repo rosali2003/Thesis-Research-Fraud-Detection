@@ -3,20 +3,18 @@ import numpy as np
 from datetime import datetime, timedelta
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report, accuracy_score
 
-
-'''
-Unusual payment method usage
-'''
 # Generate synthetic transaction data
 np.random.seed(42)
 n_transactions = 1000
 
-# Generate timestamps over a 30 day period
-timestamps = [datetime.now() - timedelta(days=np.random.randint(0,30),
-                                       hours=np.random.randint(0,24),
-                                       minutes=np.random.randint(0,60))
-             for _ in range(n_transactions)]
+# Generate timestamps over a 30-day period
+timestamps = [datetime.now() - timedelta(days=np.random.randint(0, 30),
+                                         hours=np.random.randint(0, 24),
+                                         minutes=np.random.randint(0, 60))
+              for _ in range(n_transactions)]
 
 # Define payment methods with probabilities
 payment_methods = ['credit_card', 'debit_card', 'bank_transfer', 'cryptocurrency', 'digital_wallet']
@@ -24,7 +22,7 @@ payment_weights = [0.4, 0.3, 0.15, 0.05, 0.1]  # Make crypto and digital wallet 
 
 # Generate user IDs with some users having multiple transactions
 n_users = 200
-user_ids = np.random.randint(1, n_users+1, n_transactions)
+user_ids = np.random.randint(1, n_users + 1, n_transactions)
 
 # Generate transaction data
 data = {
@@ -42,6 +40,9 @@ df = df.sort_values(['user_id', 'timestamp'])
 # Calculate time difference and payment method changes between consecutive transactions
 df['time_diff'] = df.groupby('user_id')['timestamp'].diff().dt.total_seconds()
 df['payment_changed'] = df.groupby('user_id')['payment_method'].transform(lambda x: x != x.shift())
+
+# Replace any NaN in 'time_diff' with 0 or any meaningful value since it's likely to occur at the first transaction of each user
+df['time_diff'] = df['time_diff'].fillna(0)
 
 # Flag suspicious patterns
 df['suspicious'] = False
@@ -76,20 +77,26 @@ y = df['suspicious']
 # Split into train and test sets (80% train, 20% test)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
 
-# Convert to PyTorch tensors
-X_train_tensor = torch.tensor(X_train.values, dtype=torch.float32)
-X_test_tensor = torch.tensor(X_test.values, dtype=torch.float32)
-y_train_tensor = torch.tensor(y_train.values, dtype=torch.float32)
-y_test_tensor = torch.tensor(y_test.values, dtype=torch.float32)
-
 # Scale numerical features
 scaler = StandardScaler()
 numerical_cols = ['amount', 'time_diff', 'hour', 'day', 'month']
 X_train[numerical_cols] = scaler.fit_transform(X_train[numerical_cols])
 X_test[numerical_cols] = scaler.transform(X_test[numerical_cols])
 
-print("Training set shape:", X_train.shape)
-print("Testing set shape:", X_test.shape)
-print("\nFeatures:", list(X_train.columns))
-print("\nClass distribution in training set:")
-print(y_train.value_counts(normalize=True))
+# Train a logistic regression model
+log_reg = LogisticRegression(random_state=42)
+log_reg.fit(X_train, y_train)
+
+# Make predictions
+y_pred_train = log_reg.predict(X_train)
+y_pred_test = log_reg.predict(X_test)
+
+# Evaluate the model
+train_accuracy = accuracy_score(y_train, y_pred_train)
+test_accuracy = accuracy_score(y_test, y_pred_test)
+
+print("Training accuracy:", train_accuracy)
+print("Testing accuracy:", test_accuracy)
+
+print("\nClassification Report on Test Data:")
+print(classification_report(y_test, y_pred_test))

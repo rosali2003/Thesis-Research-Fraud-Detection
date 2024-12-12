@@ -6,7 +6,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 import torch
 from torch.utils.data import DataLoader, TensorDataset
-
+'''
+Unusual Browser Fingerprint or Device Change
+'''
 # Set random seed
 np.random.seed(42)
 
@@ -31,20 +33,20 @@ start_date = datetime(2024, 1, 1)
 # Generate normal user patterns (80%)
 for i in range(400):
     user_id = f"USER_{i:04d}"
-    
+
     # Normal users tend to use 1-2 devices consistently
     preferred_devices = np.random.choice(device_types, size=np.random.randint(1, 3), replace=False)
     preferred_browser = np.random.choice(browsers)
     preferred_os = np.random.choice(operating_systems)
-    
+
     # Generate logins for this user
     n_logins = np.random.randint(15, 45)  # Random number of logins over the period
-    
+
     for _ in range(n_logins):
         login_date = start_date + timedelta(days=np.random.randint(0, n_days))
         user_ids.append(user_id)
         login_dates.append(login_date)
-        
+
         # High probability of using preferred device/browser/os
         device_list.append(np.random.choice(preferred_devices))
         browser_list.append(preferred_browser if np.random.random() < 0.9 else np.random.choice(browsers))
@@ -54,15 +56,15 @@ for i in range(400):
 # Generate suspicious patterns (20%)
 for i in range(100):
     user_id = f"USER_{i+400:04d}"
-    
+
     # Suspicious users frequently change their configuration
     n_logins = np.random.randint(30, 60)  # More frequent logins
-    
+
     for _ in range(n_logins):
         login_date = start_date + timedelta(days=np.random.randint(0, n_days))
         user_ids.append(user_id)
         login_dates.append(login_date)
-        
+
         # Randomly select device/browser/os with high variability
         device_list.append(np.random.choice(device_types))
         browser_list.append(np.random.choice(browsers))

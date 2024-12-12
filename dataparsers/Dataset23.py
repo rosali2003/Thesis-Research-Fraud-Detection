@@ -7,6 +7,9 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 import torch
 from torch.utils.data import DataLoader, TensorDataset
 
+'''
+multiple failed login attempts
+'''
 # Set random seed
 np.random.seed(42)
 
@@ -27,15 +30,15 @@ start_date = datetime(2024, 1, 1)
 for i in range(400):
     user_id = f"USER_{i:04d}"
     base_ip = f"192.168.{random.randint(0,255)}"
-    
+
     # Generate login attempts for this user
     n_attempts = np.random.randint(10, 30)  # Random number of login attempts
-    
+
     for _ in range(n_attempts):
         attempt_date = start_date + timedelta(days=np.random.randint(0, n_days))
         user_ids.append(user_id)
         attempt_dates.append(attempt_date)
-        
+
         # Normal users mostly have successful logins with occasional failures
         success.append(1 if random.random() < 0.95 else 0)
         # Normal users mostly use same IP
@@ -45,14 +48,14 @@ for i in range(400):
 # Generate suspicious patterns (20%)
 for i in range(100):
     user_id = f"USER_{i+400:04d}"
-    
+
     # Generate series of failed attempts followed by success
     n_series = np.random.randint(3, 6)  # Number of attack series
-    
+
     for _ in range(n_series):
         attempt_date = start_date + timedelta(days=np.random.randint(0, n_days))
         n_failures = np.random.randint(5, 15)  # Number of failed attempts in series
-        
+
         # Generate multiple failed attempts
         for j in range(n_failures):
             user_ids.append(user_id)
@@ -61,7 +64,7 @@ for i in range(100):
             # Attackers try from different IPs
             ip_addresses.append(f"{random.randint(1,255)}.{random.randint(1,255)}.{random.randint(1,255)}.{random.randint(1,255)}")
             is_fraudulent.append(1)
-        
+
         # Add successful attempt after failures
         user_ids.append(user_id)
         attempt_dates.append(attempt_date + timedelta(minutes=random.randint(11, 20)))

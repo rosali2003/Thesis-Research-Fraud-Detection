@@ -7,13 +7,15 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
 import torch
 from torch.utils.data import DataLoader, TensorDataset
-
+'''
+Newly created account with high-value transactions
+'''
 # Generate synthetic data
 np.random.seed(42)
 n_accounts = 1000
 
 # Generate account creation dates over last 180 days
-creation_dates = [datetime.now() - timedelta(days=np.random.randint(1, 180)) 
+creation_dates = [datetime.now() - timedelta(days=np.random.randint(1, 180))
                  for _ in range(n_accounts)]
 
 # Generate transaction data
@@ -26,7 +28,7 @@ is_fraudulent = []
 for i in range(int(n_accounts * 0.8)):
     creation_date = creation_dates[i]
     num_transactions = np.random.randint(1, 10)
-    
+
     for _ in range(num_transactions):
         # Transactions spread out over time after account creation
         days_after = np.random.randint(7, 90)
@@ -39,7 +41,7 @@ for i in range(int(n_accounts * 0.8)):
 for i in range(int(n_accounts * 0.8), n_accounts):
     creation_date = creation_dates[i]
     num_transactions = np.random.randint(3, 7)
-    
+
     for _ in range(num_transactions):
         # Transactions very soon after account creation
         days_after = np.random.randint(0, 5)

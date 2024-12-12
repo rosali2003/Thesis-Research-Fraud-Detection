@@ -1,3 +1,8 @@
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
@@ -7,9 +12,6 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 import torch
 from torch.utils.data import DataLoader, TensorDataset
 
-'''
-high return rate or cancelled transactions
-'''
 # Generate synthetic data
 np.random.seed(42)
 n_transactions = 1000
@@ -115,3 +117,66 @@ print("Dataset shape:", df.shape)
 print("\nFeature columns:", X.columns.tolist())
 print("\nClass distribution:")
 print(df['is_fraudulent'].value_counts(normalize=True))
+
+# Define the logistic regression model
+class LogisticRegression(nn.Module):
+    def __init__(self, input_dim):
+        super(LogisticRegression, self).__init__()
+        self.linear = nn.Linear(input_dim, 1)
+
+    def forward(self, x):
+        return torch.sigmoid(self.linear(x))
+
+# Set up the model
+input_dim = X_train.shape[1]
+model = LogisticRegression(input_dim)
+
+# Define loss function and optimizer
+criterion = nn.BCELoss()
+optimizer = optim.Adam(model.parameters(), lr=0.01)
+
+# Training loop
+num_epochs = 100
+for epoch in range(num_epochs):
+    model.train()
+    for batch_X, batch_y in train_loader:
+        # Forward pass
+        outputs = model(batch_X).squeeze()
+        loss = criterion(outputs, batch_y)
+
+        # Backward pass and optimize
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+    # Print loss every 10 epochs
+    if (epoch + 1) % 10 == 0:
+        print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
+
+# Evaluation
+model.eval()
+with torch.no_grad():
+    y_pred = model(X_test_tensor).squeeze()
+    y_pred_class = (y_pred > 0.5).float()
+
+    accuracy = accuracy_score(y_test, y_pred_class)
+    precision = precision_score(y_test, y_pred_class)
+    recall = recall_score(y_test, y_pred_class)
+    f1 = f1_score(y_test, y_pred_class)
+
+print("\nTest Results:")
+print(f"Accuracy: {accuracy:.4f}")
+print(f"Precision: {precision:.4f}")
+print(f"Recall: {recall:.4f}")
+print(f"F1 Score: {f1:.4f}")
+
+# Feature importance
+with torch.no_grad():
+    feature_importance = model.linear.weight.abs().squeeze().numpy()
+    feature_names = X.columns.tolist()
+    feature_importance_dict = dict(zip(feature_names, feature_importance))
+    sorted_features = sorted(feature_importance_dict.items(), key=lambda x: x[1], reverse=True)
+
+print("\nFeature Importance:")
+for feature, importance in sorted_features:
+    print(f"{feature}: {importance:.4f}")

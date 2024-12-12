@@ -6,7 +6,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 import torch
 from torch.utils.data import DataLoader, TensorDataset
-
+'''
+frequent order edits or shipping address changes
+'''
 # Set random seed
 np.random.seed(42)
 
@@ -36,17 +38,17 @@ def generate_address():
 for i in range(800):
     order_id = f"ORDER_{i:04d}"
     customer_id = f"CUST_{random.randint(0, 400):04d}"
-    
+
     # Normal orders have few or no changes
     original_addr = generate_address()
     n_changes = np.random.choice([0, 1], p=[0.8, 0.2])
     edit_count = np.random.randint(0, 3)
-    
+
     if n_changes == 0:
         final_addr = original_addr
     else:
         final_addr = generate_address()
-        
+
     order_ids.append(order_id)
     customer_ids.append(customer_id)
     original_addresses.append(original_addr)
@@ -60,13 +62,13 @@ for i in range(800):
 for i in range(200):
     order_id = f"ORDER_{i+800:04d}"
     customer_id = f"CUST_{random.randint(401, 500):04d}"
-    
+
     # Suspicious orders have multiple changes
     original_addr = generate_address()
     n_changes = random.randint(2, 5)
     edit_count = random.randint(3, 8)
     final_addr = generate_address()
-    
+
     order_ids.append(order_id)
     customer_ids.append(customer_id)
     original_addresses.append(original_addr)
@@ -106,7 +108,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.8, stratif
 
 # Standardize numerical features
 scaler = StandardScaler()
-numerical_cols = ['address_changes', 'order_edit_count', 'days_to_changes', 
+numerical_cols = ['address_changes', 'order_edit_count', 'days_to_changes',
                  'customer_address_change_rate', 'customer_edit_rate']
 X_train[numerical_cols] = scaler.fit_transform(X_train[numerical_cols])
 X_test[numerical_cols] = scaler.transform(X_test[numerical_cols])

@@ -6,7 +6,9 @@ import torch
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.model_selection import train_test_split
 from torch.utils.data import TensorDataset, DataLoader
-
+'''
+payment decline followed by a different card
+'''
 # Generate synthetic data
 n_samples = 10000
 transaction_ids = []
@@ -21,7 +23,7 @@ is_fraudulent = []
 for i in range(int(n_samples * 0.7)):
     customer_id = f"C{random.randint(1000, 9999)}"
     base_time = datetime.now() - timedelta(days=random.randint(1, 180))
-    
+
     # Single successful transaction
     transaction_ids.append(f"T{i}")
     customer_ids.append(customer_id)
@@ -35,7 +37,7 @@ for i in range(int(n_samples * 0.7)):
 for i in range(int(n_samples * 0.3)):
     customer_id = f"C{random.randint(1000, 9999)}"
     base_time = datetime.now() - timedelta(days=random.randint(1, 180))
-    
+
     # Multiple attempts with different cards in quick succession
     n_attempts = random.randint(3, 6)
     for j in range(n_attempts):

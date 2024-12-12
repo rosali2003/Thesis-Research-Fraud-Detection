@@ -6,7 +6,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 import torch
 from torch.utils.data import DataLoader, TensorDataset
-
+'''
+Abnormal cart composition
+'''
 # Set random seed
 np.random.seed(42)
 
@@ -35,13 +37,13 @@ is_fraudulent = []
 for i in range(800):
     order_id = f"ORDER_{i:04d}"
     customer_id = f"CUST_{np.random.randint(0, 400):04d}"
-    
+
     # Normal customers tend to buy 1-5 items per order
     n_items = np.random.randint(1, 6)
-    
+
     # Select products (typically mixed categories, moderate values)
     order_products = products.sample(n=n_items)
-    
+
     order_ids.append(order_id)
     customer_ids.append(customer_id)
     product_lists.append(order_products['product_id'].tolist())
@@ -54,10 +56,10 @@ for i in range(800):
 for i in range(200):
     order_id = f"ORDER_{i+800:04d}"
     customer_id = f"CUST_{np.random.randint(400, 500):04d}"
-    
+
     # Fraudulent pattern type (0: high value, 1: low resale value)
     fraud_type = np.random.randint(0, 2)
-    
+
     if fraud_type == 0:
         # High value items
         n_items = np.random.randint(3, 8)
@@ -66,7 +68,7 @@ for i in range(200):
         # Low resale value items
         n_items = np.random.randint(5, 10)
         order_products = products[products['resale_value_ratio'] < products['resale_value_ratio'].quantile(0.2)].sample(n=n_items, replace=True)
-    
+
     order_ids.append(order_id)
     customer_ids.append(customer_id)
     product_lists.append(order_products['product_id'].tolist())

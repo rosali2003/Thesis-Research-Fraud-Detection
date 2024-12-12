@@ -6,6 +6,9 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 import torch
 from torch.utils.data import DataLoader, TensorDataset
 
+'''
+billing address region with fraud history
+'''
 # Set random seed for reproducibility
 np.random.seed(42)
 
@@ -24,13 +27,13 @@ transaction_data = []
 for _ in range(800):
     user_id = np.random.choice(user_ids)
     billing_country = user_billing_country[user_id]
-    
+
     # Access country usually matches billing country with small variation
     if np.random.random() < 0.9:
         access_country = billing_country
     else:
         access_country = np.random.choice([c for c in billing_countries if c != billing_country])
-    
+
     transaction_data.append({
         'user_id': user_id,
         'billing_country': billing_country,
@@ -47,7 +50,7 @@ for _ in range(200):
     user_id = np.random.choice(user_ids)
     billing_country = user_billing_country[user_id]
     access_country = np.random.choice(vpn_countries)
-    
+
     transaction_data.append({
         'user_id': user_id,
         'billing_country': billing_country,

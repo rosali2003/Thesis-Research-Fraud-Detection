@@ -7,6 +7,9 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 import torch
 from torch.utils.data import DataLoader, TensorDataset
 
+'''
+IP geolocation doesn't match billing or shipping address
+'''
 # Generate synthetic data
 np.random.seed(42)
 n_transactions = 1000
@@ -27,22 +30,22 @@ countries = ['US', 'CA', 'GB', 'FR', 'DE', 'ES', 'IT', 'AU', 'JP', 'BR']
 for i in range(800):
     transaction_ids.append(f"TXN_{i:04d}")
     customer_ids.append(f"CUST_{random.randint(1, 400):04d}")
-    
+
     # For legitimate transactions, locations usually match
     country = np.random.choice(countries)
     ip_countries.append(country)
-    
+
     # Small chance of different but reasonable shipping/billing addresses
     if random.random() < 0.1:
         billing_countries.append(np.random.choice(countries))
     else:
         billing_countries.append(country)
-        
+
     if random.random() < 0.15:
         shipping_countries.append(np.random.choice(countries))
     else:
         shipping_countries.append(country)
-    
+
     order_amounts.append(round(random.uniform(50, 500), 2))
     is_fraudulent.append(0)
 
@@ -50,19 +53,19 @@ for i in range(800):
 for i in range(200):
     transaction_ids.append(f"TXN_{i+800:04d}")
     customer_ids.append(f"CUST_{random.randint(401, 500):04d}")
-    
+
     # For suspicious transactions, IP location differs significantly
     billing_country = np.random.choice(countries)
     shipping_country = np.random.choice(countries)
-    
+
     # Ensure IP country is different from both billing and shipping
     available_countries = [c for c in countries if c not in [billing_country, shipping_country]]
     ip_country = np.random.choice(available_countries)
-    
+
     ip_countries.append(ip_country)
     billing_countries.append(billing_country)
     shipping_countries.append(shipping_country)
-    
+
     # Slightly higher order amounts for suspicious transactions
     order_amounts.append(round(random.uniform(200, 1000), 2))
     is_fraudulent.append(1)
@@ -85,7 +88,7 @@ df['billing_shipping_match'] = (df['billing_country'] == df['shipping_country'])
 
 # Calculate historical patterns per customer
 df['customer_country_mismatch_rate'] = df.groupby('customer_id').apply(
-    lambda x: ((x['ip_country'] != x['billing_country']) | 
+    lambda x: ((x['ip_country'] != x['billing_country']) |
                (x['ip_country'] != x['shipping_country'])).mean()
 ).reset_index(level=0, drop=True)
 

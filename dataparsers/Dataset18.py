@@ -6,7 +6,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 import torch
 from torch.utils.data import DataLoader, TensorDataset
-
+'''
+Account Behavior Deviating from Normal Usage
+'''
 # Generate synthetic data
 np.random.seed(42)
 n_accounts = 500
@@ -24,19 +26,19 @@ start_date = datetime(2024, 1, 1)
 # Generate normal transaction patterns (80%)
 for i in range(400):
     account_id = f"ACC_{i:04d}"
-    
+
     # Normal spending pattern parameters
     avg_daily_transactions = random.uniform(0.5, 2)  # Average transactions per day
     avg_amount = random.uniform(50, 200)  # Average transaction amount
     amount_std = avg_amount * 0.2  # Standard deviation for amount
-    
+
     # Generate transactions for this account
     for day in range(n_days):
         current_date = start_date + timedelta(days=day)
-        
+
         # Random number of transactions for this day
         n_transactions = np.random.poisson(avg_daily_transactions)
-        
+
         for _ in range(n_transactions):
             account_ids.append(account_id)
             transaction_dates.append(current_date)
@@ -47,29 +49,29 @@ for i in range(400):
 # Generate suspicious patterns (20%)
 for i in range(100):
     account_id = f"ACC_{i+400:04d}"
-    
+
     # Normal period
     avg_daily_transactions = random.uniform(0.5, 2)
     avg_amount = random.uniform(50, 200)
     amount_std = avg_amount * 0.2
-    
+
     # Generate normal transactions for first 60 days
     for day in range(60):
         current_date = start_date + timedelta(days=day)
         n_transactions = np.random.poisson(avg_daily_transactions)
-        
+
         for _ in range(n_transactions):
             account_ids.append(account_id)
             transaction_dates.append(current_date)
             amounts.append(max(10, np.random.normal(avg_amount, amount_std)))
             transaction_frequencies.append(n_transactions)
             is_fraudulent.append(0)
-    
+
     # Suspicious period - increased frequency and amounts
     for day in range(60, n_days):
         current_date = start_date + timedelta(days=day)
         n_transactions = np.random.poisson(avg_daily_transactions * 3)  # Triple frequency
-        
+
         for _ in range(n_transactions):
             account_ids.append(account_id)
             transaction_dates.append(current_date)

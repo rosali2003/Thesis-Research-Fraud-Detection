@@ -15,7 +15,6 @@ def generate_ip_addresses(num_samples, change_interval=50):
         ip_addresses.append(new_ip)
     return ip_addresses
 
-# Number of samples in the dataset
 num_samples = 1000
 
 # Create the dataset with changing IP addresses

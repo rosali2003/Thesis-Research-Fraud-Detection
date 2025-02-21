@@ -1,0 +1,187 @@
+import random
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.preprocessing import OneHotEncoder
+
+# -------------------------------
+# Step 1. Synthetic Dataset Creation
+# -------------------------------
+
+def is_private(ip):
+    """
+    Check if an IPv4 address (string) is in a private range.
+    Private ranges:
+      - 10.0.0.0 to 10.255.255.255
+      - 172.16.0.0 to 172.31.255.255
+      - 192.168.0.0 to 192.168.255.255
+    """
+    parts = list(map(int, ip.split('.')))
+    if parts[0] == 10:
+        return True
+    if parts[0] == 172 and 16 <= parts[1] <= 31:
+        return True
+    if parts[0] == 192 and parts[1] == 168:
+        return True
+    return False
+
+def generate_public_ip():
+    """Generate a random public IPv4 address (ensuring it is not private)."""
+    while True:
+        ip = f"{random.randint(1,255)}.{random.randint(0,255)}.{random.randint(0,255)}.{random.randint(0,255)}"
+        if not is_private(ip):
+            return ip
+
+def generate_private_ip():
+    """Generate a random private IPv4 address."""
+    range_choice = random.choice(['10', '172', '192'])
+    if range_choice == '10':
+        return f"10.{random.randint(0,255)}.{random.randint(0,255)}.{random.randint(0,255)}"
+    elif range_choice == '172':
+        return f"172.{random.randint(16,31)}.{random.randint(0,255)}.{random.randint(0,255)}"
+    else:
+        return f"192.168.{random.randint(0,255)}.{random.randint(0,255)}"
+
+def generate_ip():
+    """
+    Randomly generate an IP address.
+    For this example, we assume a 50/50 chance for public vs. private.
+    
+    Returns:
+        ip (str): The generated IP address.
+        ip_category (str): "public" or "private"
+    """
+    if random.random() < 0.5:
+        return generate_public_ip(), "public"
+    else:
+        return generate_private_ip(), "private"
+
+# Define device types and their probabilities.
+device_types = ["mobile", "desktop", "tablet", "other"]
+device_probs = [0.5, 0.3, 0.15, 0.05]
+
+# Base fraud probabilities and adjustments for dataset generation.
+fraud_prob_by_ip = {
+    "public": 0.03,   # 3% base fraud chance for public IPs
+    "private": 0.07   # 7% base fraud chance for private IPs
+}
+
+fraud_adjustment_by_device = {
+    "mobile": 0.00,
+    "desktop": 0.05,
+    "tablet": 0.02,
+    "other": 0.00
+}
+
+def create_fraud_detection_dataset(num_rows=1000):
+    """
+    Create a synthetic fraud detection dataset.
+    
+    Each row includes:
+      - ip_address: The generated IP address.
+      - ip_category: "public" or "private" (based on the generated IP).
+      - device_type: The type of device used.
+      - is_fraud: Binary fraud label (1 indicates fraud, 0 indicates not fraud),
+                  determined by the combination of ip_category and device_type.
+    """
+    data = []
+    for _ in range(num_rows):
+        # Generate IP address and its category.
+        ip, ip_category = generate_ip()
+        # Choose a device type based on the specified probabilities.
+        device_type = random.choices(device_types, weights=device_probs, k=1)[0]
+        
+        # Calculate fraud probability.
+        base_prob = fraud_prob_by_ip[ip_category]
+        adjustment = fraud_adjustment_by_device[device_type]
+        fraud_probability = min(base_prob + adjustment, 0.2)  # cap at 20%
+        
+        # Determine fraud label.
+        is_fraud = 1 if random.random() < fraud_probability else 0
+        
+        data.append({
+            "ip_address": ip,
+            "ip_category": ip_category,
+            "device_type": device_type,
+            "is_fraud": is_fraud
+        })
+    
+    df = pd.DataFrame(data)
+    return df
+
+# -------------------------------
+# Step 2. Preprocess Data for Random Forest
+# -------------------------------
+
+def preprocess_data(df):
+    """
+    Preprocess the fraud detection dataset for classification.
+    
+    We will use two categorical features:
+      - ip_category ("public" or "private")
+      - device_type ("mobile", "desktop", "tablet", "other")
+    
+    These features are one-hot encoded.
+    
+    Returns:
+        X: Feature matrix (numpy array).
+        y: Target vector (is_fraud).
+    """
+    # Select the relevant features.
+    features = df[['ip_category', 'device_type']]
+    
+    # One-hot encode the categorical features.
+    encoder = OneHotEncoder(sparse_output=False)
+    X_encoded = encoder.fit_transform(features)
+    
+    # Target variable.
+    y = df['is_fraud'].values
+    return X_encoded, y
+
+# -------------------------------
+# Step 3. Main Execution: Train Random Forest Classifier
+# -------------------------------
+
+if __name__ == "__main__":
+    # Generate the synthetic fraud detection dataset.
+    df = create_fraud_detection_dataset(num_rows=1000)
+    
+    # Optionally, save the dataset.
+    df.to_csv("synthetic_fraud_detection_dataset.csv", index=False)
+    
+    # Display a sample of the dataset.
+    print("First 5 rows of the synthetic fraud detection dataset:")
+    print(df.head())
+    
+    # Preprocess the dataset.
+    X, y = preprocess_data(df)
+    
+    # Split the dataset into training and test sets.
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    
+    # Train a Random Forest classifier.
+    model = RandomForestClassifier(n_estimators=100, random_state=42)
+    model.fit(X_train, y_train)
+    
+    # Predict on the test set.
+    y_pred = model.predict(X_test)
+    
+    # Evaluate the model.
+    print("\nClassification Report:")
+    print(classification_report(y_test, y_pred))
+    
+    # Compute the confusion matrix.
+    tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
+    print("\nConfusion Matrix:")
+    print("True Negatives:", tn)
+    print("False Positives:", fp)
+    print("False Negatives:", fn)
+    print("True Positives:", tp)
+    
+    # Calculate additional metrics.
+    fp_rate = (fp / (fp + tn)) * 100 if (fp + tn) > 0 else 0
+    fn_rate = (fn / (fn + tp)) * 100 if (fn + tp) > 0 else 0
+    print(f"\nFalse Positive Rate: {fp_rate:.2f}%")
+    print(f"False Negative Rate: {fn_rate:.2f}%")
